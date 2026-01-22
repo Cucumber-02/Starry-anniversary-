@@ -1,70 +1,44 @@
 * {
   box-sizing: border-box;
-  font-family: system-ui, sans-serif;
 }
 
 body {
   margin: 0;
-  height: 100vh;
-  background: linear-gradient(#020024, #090979, #000);
+  font-family: 'Press Start 2P', monospace;
+  background: black;
   overflow: hidden;
 }
 
+/* Scene */
+.scene {
+  position: relative;
+  width: 100vw;
+  height: 200vh;
+  transition: transform 1.5s ease-in-out;
+}
+
+.scene.pan-up {
+  transform: translateY(-50vh);
+}
+
 /* Sky */
-#sky {
-  position: absolute;
-  width: 100%;
-  height: 100%;
-}
-
-/* Stars */
-.star {
-  position: absolute;
-  width: 4px;
-  height: 4px;
-  background: white;
-  border-radius: 50%;
-  animation: twinkle 2s infinite ease-in-out;
-}
-
-@keyframes twinkle {
-  0%,100% { opacity: 0.4; }
-  50% { opacity: 1; }
-}
-
-/* Rare Star */
-.star.rare {
-  box-shadow: 0 0 20px rgba(255,255,255,0.9),
-              0 0 40px rgba(255,215,0,0.6);
-  animation: pulse 1.5s infinite;
-}
-
-@keyframes pulse {
-  0%,100% { transform: scale(1); }
-  50% { transform: scale(1.2); }
+.sky {
+  position: relative;
+  height: 100vh;
+  background: radial-gradient(circle at top, #111 0%, #000 60%);
+  overflow: hidden;
 }
 
 /* Moon */
 .moon {
   position: absolute;
-  top: 50px;
-  right: 70px;
+  top: 80px;
+  right: 80px;
   width: 120px;
   height: 120px;
   background: white;
   border-radius: 50%;
-  box-shadow: 0 0 20px rgba(255,255,255,0.6);
-}
-
-.moon::after {
-  content: "";
-  position: absolute;
-  top: 10px;
-  left: 30px;
-  width: 100px;
-  height: 100px;
-  background: #020024;
-  border-radius: 50%;
+  box-shadow: 0 0 20px white;
 }
 
 /* Ocean */
@@ -73,85 +47,78 @@ body {
   bottom: 0;
   width: 100%;
   height: 35%;
-  background: linear-gradient(to top, #001f3f, #003566, #004c8c);
-  animation: waves 6s ease-in-out infinite;
+  background: linear-gradient(to top, #001f3f, #003366, #004c99);
+  animation: wave 4s ease-in-out infinite;
 }
 
-@keyframes waves {
-  0%,100% { background-position: 0 0; }
-  50% { background-position: 200px 0; }
+@keyframes wave {
+  0% { background-position: 0 0; }
+  50% { background-position: 100px 20px; }
+  100% { background-position: 0 0; }
 }
 
-/* Dialogue */
-#dialogue {
+/* Button */
+#captureBtn {
   position: fixed;
-  bottom: 120px;
-  width: 100%;
-  text-align: center;
-  color: white;
-  font-size: 18px;
-  opacity: 0;
-  transition: opacity 1s;
-}
-
-/* Active Star */
-#activeStar {
-  position: fixed;
-  top: 40%;
+  bottom: 40px;
   left: 50%;
-  transform: translate(-50%, -50%);
+  transform: translateX(-50%);
+  padding: 14px 20px;
+  font-size: 10px;
+  cursor: pointer;
+  background: black;
+  color: white;
+  border: 2px solid white;
+}
+
+/* Star */
+.star {
+  position: absolute;
+  width: 120px;
+  height: 120px;
+  animation: floatDown 2.5s ease-out forwards, shimmer 1.5s infinite;
+}
+
+@keyframes floatDown {
+  from {
+    transform: translateY(-200px) scale(0.8);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(200px) scale(1);
+    opacity: 1;
+  }
+}
+
+@keyframes shimmer {
+  0% { filter: brightness(1); }
+  50% { filter: brightness(1.4); }
+  100% { filter: brightness(1); }
+}
+
+/* Star text */
+.star-text {
+  position: absolute;
+  top: 50%;
+  left: 50%;
   width: 80px;
+  transform: translate(-50%, -50%);
+  text-align: center;
+  font-size: 8px;
+  color: black;
+  line-height: 1.4;
+}
+
+/* Shooting stars */
+.shooting-star {
+  position: absolute;
+  width: 2px;
   height: 80px;
   background: white;
-  border-radius: 50%;
-  box-shadow: 0 0 25px rgba(255,255,255,0.8);
+  animation: shoot 1.5s linear;
 }
 
-#starMessage {
-  color: black;
-  font-size: 14px;
-  padding: 10px;
-  text-align: center;
+@keyframes shoot {
+  from { transform: translate(0, 0); opacity: 1; }
+  to { transform: translate(200px, 300px); opacity: 0; }
 }
-
-/* Buttons */
-.controls {
-  position: fixed;
-  bottom: 30px;
-  width: 100%;
-  display: flex;
-  justify-content: center;
-  gap: 10px;
-}
-
-button {
-  padding: 10px 16px;
-  border-radius: 20px;
-  border: none;
-  font-size: 16px;
-  cursor: pointer;
-}
-
-/* Jar */
-#jarIcon {
-  position: fixed;
-  bottom: 30px;
-  right: 30px;
-  font-size: 26px;
-  cursor: pointer;
-}
-
-/* Modal */
-#jarModal {
-  position: fixed;
-  inset: 20%;
-  background: rgba(0,0,0,0.85);
-  color: white;
-  padding: 20px;
-  border-radius: 16px;
-}
-
-.hidden {
-  display: none;
-}
-
