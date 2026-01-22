@@ -1,1 +1,157 @@
+* {
+  box-sizing: border-box;
+  font-family: system-ui, sans-serif;
+}
+
+body {
+  margin: 0;
+  height: 100vh;
+  background: linear-gradient(#020024, #090979, #000);
+  overflow: hidden;
+}
+
+/* Sky */
+#sky {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+}
+
+/* Stars */
+.star {
+  position: absolute;
+  width: 4px;
+  height: 4px;
+  background: white;
+  border-radius: 50%;
+  animation: twinkle 2s infinite ease-in-out;
+}
+
+@keyframes twinkle {
+  0%,100% { opacity: 0.4; }
+  50% { opacity: 1; }
+}
+
+/* Rare Star */
+.star.rare {
+  box-shadow: 0 0 20px rgba(255,255,255,0.9),
+              0 0 40px rgba(255,215,0,0.6);
+  animation: pulse 1.5s infinite;
+}
+
+@keyframes pulse {
+  0%,100% { transform: scale(1); }
+  50% { transform: scale(1.2); }
+}
+
+/* Moon */
+.moon {
+  position: absolute;
+  top: 50px;
+  right: 70px;
+  width: 120px;
+  height: 120px;
+  background: white;
+  border-radius: 50%;
+  box-shadow: 0 0 20px rgba(255,255,255,0.6);
+}
+
+.moon::after {
+  content: "";
+  position: absolute;
+  top: 10px;
+  left: 30px;
+  width: 100px;
+  height: 100px;
+  background: #020024;
+  border-radius: 50%;
+}
+
+/* Ocean */
+.ocean {
+  position: absolute;
+  bottom: 0;
+  width: 100%;
+  height: 35%;
+  background: linear-gradient(to top, #001f3f, #003566, #004c8c);
+  animation: waves 6s ease-in-out infinite;
+}
+
+@keyframes waves {
+  0%,100% { background-position: 0 0; }
+  50% { background-position: 200px 0; }
+}
+
+/* Dialogue */
+#dialogue {
+  position: fixed;
+  bottom: 120px;
+  width: 100%;
+  text-align: center;
+  color: white;
+  font-size: 18px;
+  opacity: 0;
+  transition: opacity 1s;
+}
+
+/* Active Star */
+#activeStar {
+  position: fixed;
+  top: 40%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 80px;
+  height: 80px;
+  background: white;
+  border-radius: 50%;
+  box-shadow: 0 0 25px rgba(255,255,255,0.8);
+}
+
+#starMessage {
+  color: black;
+  font-size: 14px;
+  padding: 10px;
+  text-align: center;
+}
+
+/* Buttons */
+.controls {
+  position: fixed;
+  bottom: 30px;
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+}
+
+button {
+  padding: 10px 16px;
+  border-radius: 20px;
+  border: none;
+  font-size: 16px;
+  cursor: pointer;
+}
+
+/* Jar */
+#jarIcon {
+  position: fixed;
+  bottom: 30px;
+  right: 30px;
+  font-size: 26px;
+  cursor: pointer;
+}
+
+/* Modal */
+#jarModal {
+  position: fixed;
+  inset: 20%;
+  background: rgba(0,0,0,0.85);
+  color: white;
+  padding: 20px;
+  border-radius: 16px;
+}
+
+.hidden {
+  display: none;
+}
 
