@@ -1,90 +1,62 @@
-const sky = document.getElementById("sky");
-const captureBtn = document.getElementById("captureBtn");
-const dismissBtn = document.getElementById("dismissBtn");
-const dialogue = document.getElementById("dialogue");
-const activeStar = document.getElementById("activeStar");
-const starMessage = document.getElementById("starMessage");
-const jarIcon = document.getElementById("jarIcon");
-const jarModal = document.getElementById("jarModal");
-const jarStars = document.getElementById("jarStars");
-
-let starJar = [];
-
-// ✨ CUSTOM NOTES (EDIT THIS)
-const starPool = [
-  { type: "normal", text: "You make my world feel calm." },
-  { type: "normal", text: "I love how your mind works." },
-  { type: "normal", text: "You are my favorite person." },
-  { type: "rare", text: "🌟 Redeem: One free meal on me 🌟", redeemable: true },
-  { type: "rare", text: "🌟 Redeem: Choose our next date 🌟", redeemable: true }
+const stars = [
+  { text: "I love you more than you know 💙", rare: false },
+  { text: "You’re my favorite person ✨", rare: false },
+  { text: "Free meal on me 🍜", rare: true },
+  { text: "One cuddle on demand 🫂", rare: true }
 ];
 
-// Create background stars
-for (let i = 0; i < 60; i++) {
+const btn = document.getElementById("captureBtn");
+const scene = document.getElementById("scene");
+const container = document.getElementById("starContainer");
+
+btn.addEventListener("click", () => {
+  scene.classList.add("pan-up");
+  createStar();
+});
+
+function createStar() {
+  const starData = stars[Math.floor(Math.random() * stars.length)];
+
   const star = document.createElement("div");
   star.className = "star";
-  star.style.top = Math.random() * 100 + "vh";
-  star.style.left = Math.random() * 100 + "vw";
-  sky.appendChild(star);
+  star.style.left = "50%";
+  star.style.top = "0px";
+  star.style.transform = "translateX(-50%)";
+
+  const svg = `
+    <svg viewBox="0 0 24 24" width="120" height="120">
+      <polygon 
+        points="12,2 15,9 22,9 16.5,14 18.5,21 12,17 5.5,21 7.5,14 2,9 9,9"
+        fill="${starData.rare ? '#ffd700' : 'white'}"
+      />
+    </svg>
+  `;
+
+  star.innerHTML = svg;
+
+  const text = document.createElement("div");
+  text.className = "star-text";
+  text.innerText = starData.text;
+
+  star.appendChild(text);
+  container.appendChild(star);
+
+  setTimeout(() => {
+    star.remove();
+    scene.classList.remove("pan-up");
+  }, 5000);
 }
 
-// Dialogue helper
-function showDialogue(text) {
-  dialogue.textContent = text;
-  dialogue.style.opacity = 1;
-  setTimeout(() => dialogue.style.opacity = 0, 3000);
+/* Shooting stars */
+function createShootingStar() {
+  const s = document.createElement("div");
+  s.className = "shooting-star";
+  document.body.appendChild(s);
+
+  s.style.left = Math.random() * window.innerWidth + "px";
+  s.style.top = "-50px";
+
+  setTimeout(() => s.remove(), 1500);
 }
 
-// Random star logic
-function getRandomStar() {
-  const chance = Math.random();
-  const rares = starPool.filter(s => s.type === "rare");
-  const normals = starPool.filter(s => s.type === "normal");
-
-  if (chance < 0.2) {
-    return rares[Math.floor(Math.random() * rares.length)];
-  }
-  return normals[Math.floor(Math.random() * normals.length)];
-}
-
-// Capture Star
-captureBtn.onclick = () => {
-  showDialogue("Oh? What’s this?");
-  const star = getRandomStar();
-
-  activeStar.className = "";
-  activeStar.classList.add(star.type === "rare" ? "star rare" : "star");
-  starMessage.textContent = star.text;
-  activeStar.classList.remove("hidden");
-
-  if (star.type === "rare") {
-    showDialogue("✨ A rare star appeared!");
-    if (star.redeemable) starJar.push(star);
-  }
-
-  captureBtn.classList.add("hidden");
-  dismissBtn.classList.remove("hidden");
-};
-
-// Return Star
-dismissBtn.onclick = () => {
-  activeStar.classList.add("hidden");
-  captureBtn.classList.remove("hidden");
-  dismissBtn.classList.add("hidden");
-};
-
-// Jar
-jarIcon.onclick = () => {
-  jarStars.innerHTML = "";
-  starJar.forEach(star => {
-    const div = document.createElement("div");
-    div.textContent = star.text;
-    jarStars.appendChild(div);
-  });
-  jarModal.classList.remove("hidden");
-};
-
-function closeJar() {
-  jarModal.classList.add("hidden");
-}
-
+setInterval(createShootingStar, 4000);
