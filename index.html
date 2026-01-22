@@ -2,47 +2,36 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Capture a Star ✨</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <!-- Pixel Font -->
+  <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+
   <link rel="stylesheet" href="style.css">
 </head>
-
 <body>
 
-  <!-- Sky -->
-  <div id="sky"></div>
+  <div class="scene" id="scene">
 
-  <!-- Moon -->
-  <div class="moon"></div>
+    <!-- Sky -->
+    <div class="sky">
+      <div class="moon"></div>
+    </div>
 
-  <!-- Ocean -->
-  <div class="ocean"></div>
+    <!-- Ocean -->
+    <div class="ocean"></div>
 
-  <!-- Dialogue -->
-  <div id="dialogue"></div>
+    <!-- Button -->
+    <button id="captureBtn">Capture a Star ✨</button>
 
-  <!-- Floating Star -->
-  <div id="activeStar" class="hidden">
-    <div id="starMessage"></div>
   </div>
 
-  <!-- Buttons -->
-  <div class="controls">
-    <button id="captureBtn">✨ Capture a Star</button>
-    <button id="dismissBtn" class="hidden">🌌 Return Star to Sky</button>
-  </div>
-
-  <!-- Star Jar -->
-  <div id="jarIcon">⭐</div>
-
-  <!-- Jar Modal -->
-  <div id="jarModal" class="hidden">
-    <h2>Your Star Jar</h2>
-    <div id="jarStars"></div>
-    <button onclick="closeJar()">Close</button>
-  </div>
+  <!-- Star Template -->
+  <div id="starContainer"></div>
 
   <script src="script.js"></script>
 </body>
 </html>
+
 
