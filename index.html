@@ -1,1 +1,48 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Capture a Star ✨</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+
+  <!-- Sky -->
+  <div id="sky"></div>
+
+  <!-- Moon -->
+  <div class="moon"></div>
+
+  <!-- Ocean -->
+  <div class="ocean"></div>
+
+  <!-- Dialogue -->
+  <div id="dialogue"></div>
+
+  <!-- Floating Star -->
+  <div id="activeStar" class="hidden">
+    <div id="starMessage"></div>
+  </div>
+
+  <!-- Buttons -->
+  <div class="controls">
+    <button id="captureBtn">✨ Capture a Star</button>
+    <button id="dismissBtn" class="hidden">🌌 Return Star to Sky</button>
+  </div>
+
+  <!-- Star Jar -->
+  <div id="jarIcon">⭐</div>
+
+  <!-- Jar Modal -->
+  <div id="jarModal" class="hidden">
+    <h2>Your Star Jar</h2>
+    <div id="jarStars"></div>
+    <button onclick="closeJar()">Close</button>
+  </div>
+
+  <script src="script.js"></script>
+</body>
+</html>
 
