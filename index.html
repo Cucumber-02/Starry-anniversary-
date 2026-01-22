@@ -2,36 +2,37 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Capture a Star ✨</title>
 
-  <!-- Pixel Font -->
   <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
-
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
-  <div class="scene" id="scene">
+<div id="scene" class="scene">
 
-    <!-- Sky -->
-    <div class="sky">
-      <div class="moon"></div>
-    </div>
-
-    <!-- Ocean -->
-    <div class="ocean"></div>
-
-    <!-- Button -->
-    <button id="captureBtn">Capture a Star ✨</button>
-
+  <!-- SKY -->
+  <div id="sky" class="sky">
+    <div class="moon"></div>
   </div>
 
-  <!-- Star Template -->
-  <div id="starContainer"></div>
+  <!-- OCEAN -->
+  <div class="ocean"></div>
 
-  <script src="script.js"></script>
+  <!-- UI -->
+  <button id="captureBtn">Capture a Star ✨</button>
+  <div id="dialogue" class="dialogue hidden"></div>
+  <button id="dismissBtn" class="hidden">Dismiss Star</button>
+
+  <!-- STAR JAR -->
+  <div id="starJar">⭐</div>
+  <div id="jarPopup" class="jar hidden"></div>
+
+</div>
+
+<div id="starContainer"></div>
+
+<script src="script.js"></script>
 </body>
 </html>
-
-
