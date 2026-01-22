@@ -1,11 +1,12 @@
 * {
   box-sizing: border-box;
+  image-rendering: pixelated;
 }
 
 body {
   margin: 0;
-  font-family: 'Press Start 2P', monospace;
   background: black;
+  font-family: 'Press Start 2P', monospace;
   overflow: hidden;
 }
 
@@ -14,10 +15,10 @@ body {
   position: relative;
   width: 100vw;
   height: 200vh;
-  transition: transform 1.5s ease-in-out;
+  transition: transform 1.5s steps(6);
 }
 
-.scene.pan-up {
+.scene.pan {
   transform: translateY(-50vh);
 }
 
@@ -25,20 +26,27 @@ body {
 .sky {
   position: relative;
   height: 100vh;
-  background: radial-gradient(circle at top, #111 0%, #000 60%);
-  overflow: hidden;
+  background: #000;
+}
+
+/* Pixel stars */
+.star-dot {
+  position: absolute;
+  width: 3px;
+  height: 3px;
+  background: white;
+  opacity: 0.8;
 }
 
 /* Moon */
 .moon {
   position: absolute;
-  top: 80px;
-  right: 80px;
-  width: 120px;
-  height: 120px;
+  top: 60px;
+  right: 60px;
+  width: 80px;
+  height: 80px;
   background: white;
-  border-radius: 50%;
-  box-shadow: 0 0 20px white;
+  box-shadow: 0 0 0 4px #ddd;
 }
 
 /* Ocean */
@@ -47,78 +55,98 @@ body {
   bottom: 0;
   width: 100%;
   height: 35%;
-  background: linear-gradient(to top, #001f3f, #003366, #004c99);
-  animation: wave 4s ease-in-out infinite;
+  background: repeating-linear-gradient(
+    to top,
+    #001f3f,
+    #001f3f 6px,
+    #003366 6px,
+    #003366 12px
+  );
+  animation: wave 2s steps(6) infinite;
 }
 
 @keyframes wave {
-  0% { background-position: 0 0; }
-  50% { background-position: 100px 20px; }
-  100% { background-position: 0 0; }
+  0% { background-position-y: 0; }
+  100% { background-position-y: 12px; }
 }
 
-/* Button */
-#captureBtn {
+/* Buttons */
+#captureBtn, #dismissBtn {
   position: fixed;
-  bottom: 40px;
   left: 50%;
   transform: translateX(-50%);
-  padding: 14px 20px;
+  padding: 10px;
   font-size: 10px;
-  cursor: pointer;
   background: black;
   color: white;
   border: 2px solid white;
 }
 
+#captureBtn { bottom: 60px; }
+#dismissBtn { bottom: 20px; }
+
+/* Dialogue */
+.dialogue {
+  position: fixed;
+  bottom: 120px;
+  width: 90%;
+  left: 5%;
+  padding: 12px;
+  background: black;
+  border: 2px solid white;
+  font-size: 9px;
+}
+
 /* Star */
 .star {
   position: absolute;
-  width: 120px;
-  height: 120px;
-  animation: floatDown 2.5s ease-out forwards, shimmer 1.5s infinite;
+  width: 160px;
+  height: 160px;
+  animation: floatDown 2s steps(8) forwards;
 }
 
 @keyframes floatDown {
-  from {
-    transform: translateY(-200px) scale(0.8);
-    opacity: 0;
-  }
-  to {
-    transform: translateY(200px) scale(1);
-    opacity: 1;
-  }
+  from { transform: translate(-50%, -200px); }
+  to { transform: translate(-50%, 180px); }
 }
 
-@keyframes shimmer {
-  0% { filter: brightness(1); }
-  50% { filter: brightness(1.4); }
-  100% { filter: brightness(1); }
-}
-
-/* Star text */
 .star-text {
   position: absolute;
   top: 50%;
   left: 50%;
-  width: 80px;
+  width: 110px;
   transform: translate(-50%, -50%);
   text-align: center;
-  font-size: 8px;
+  font-size: 9px;
   color: black;
-  line-height: 1.4;
 }
 
-/* Shooting stars */
+/* Shooting star */
 .shooting-star {
   position: absolute;
-  width: 2px;
-  height: 80px;
+  width: 3px;
+  height: 40px;
   background: white;
-  animation: shoot 1.5s linear;
+  transform: rotate(45deg);
+  animation: shoot 1.2s linear;
 }
 
 @keyframes shoot {
-  from { transform: translate(0, 0); opacity: 1; }
-  to { transform: translate(200px, 300px); opacity: 0; }
+  from { opacity: 1; transform: translate(0,0) rotate(45deg); }
+  to { opacity: 0; transform: translate(300px,300px) rotate(45deg); }
 }
+
+/* Star jar */
+#starJar {
+  position: fixed;
+  top: 20px;
+  left: 20px;
+  font-size: 22px;
+  cursor: pointer;
+}
+
+.jar {
+  position: fixed;
+  top: 60px;
+  left: 20p
+
