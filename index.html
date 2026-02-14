@@ -1,3 +1,4 @@
+<!-- index.html -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -48,6 +49,9 @@
 <canvas id="c"></canvas>
 <button id="catchBtn" type="button">Catch a Star</button>
 
+<!-- 1) LINK the separate file -->
+<script src="fallingStars.js"></script>
+
 <script>
   const canvas = document.getElementById("c");
   const ctx = canvas.getContext("2d", { alpha: false });
@@ -58,8 +62,8 @@
   // ---------- TWEAK KNOBS ----------
   let PX = 4;
   const SKY_RATIO = 0.62;
-  const STAR_COUNT = 110;          // baseline density reference
-  const SHOOTING_CHANCE = 0.06;    // meteors keep appearing randomly
+  const STAR_COUNT = 110;
+  const SHOOTING_CHANCE = 0.06; // meteors keep appearing randomly
   // --------------------------------
 
   const OCEAN_PAL = [
@@ -112,47 +116,62 @@
   window.addEventListener("resize", resize);
   resize();
 
-  // --------- STARFIELD ----------
+  // --------- CAMERA PAN (downwards = look up) ----------
+  let camStartY = 0;
+  let camNowY = 0;
+  let camTargetY = 0;
+  let camT0 = -999;
+  const PAN_DURATION = 2.2; // slower shift
+
+  function computePanDownPx(skyH, h) {
+    // hide ocean: need skyH + camY >= h
+    return (h - skyH) + 24;
+  }
+
+  function startPan(nowSeconds, skyH, h) {
+    camStartY = camNowY;
+    const down = computePanDownPx(skyH, h);
+    camTargetY = (Math.abs(camNowY) < 1) ? down : 0; // toggle
+    camT0 = nowSeconds;
+  }
+
+  // --------- STARFIELD (twinkles) ----------
   const stars = [];
   function initStars() {
-  stars.length = 0;
+    stars.length = 0;
 
-  const w = canvas.width, h = canvas.height;
-  const skyH = Math.floor(h * SKY_RATIO);
+    const w = canvas.width, h = canvas.height;
+    const skyH = Math.floor(h * SKY_RATIO);
 
-  const cols = Math.ceil(w / PX);
-  const rowsFull = Math.ceil(h / PX);
+    const cols = Math.ceil(w / PX);
+    const rowsFull = Math.ceil(h / PX);
 
-  // How far we can pan down (so ocean disappears)
-  const panDownPx = computePanDownPx(skyH, h);
+    // Extend starfield above the canvas so when we pan DOWN, we still see stars at top
+    const panDownPx = computePanDownPx(skyH, h);
+    const padRows = Math.ceil(panDownPx / PX) + 26;
 
-  // Extra star space above + below (in rows), plus a little margin
-  const padRows = Math.ceil(panDownPx / PX) + 20;
+    const extendedRows = rowsFull + 2 * padRows;
 
-  // Baseline star density was STAR_COUNT over the sky area (skyH).
-  // Scale it to the extended height so density stays consistent.
-  const extendedRows = rowsFull + 2 * padRows;
-  const skyRows = Math.max(1, Math.ceil(skyH / PX));
-  const scaledCount = Math.floor(STAR_COUNT * (extendedRows / skyRows));
+    // density based on "sky rows" baseline
+    const skyRows = Math.max(1, Math.ceil(skyH / PX));
+    const scaledCount = Math.floor(STAR_COUNT * (extendedRows / skyRows));
 
-  for (let i = 0; i < scaledCount; i++) {
-    const x = Math.floor(Math.random() * cols);
+    for (let i = 0; i < scaledCount; i++) {
+      const x = Math.floor(Math.random() * cols);
+      const y = Math.floor((Math.random() * extendedRows) - padRows); // can be negative
 
-    // IMPORTANT: allow stars above 0 (negative y) and below the canvas
-    const y = Math.floor((Math.random() * extendedRows) - padRows);
+      const s = (Math.random() < 0.15) ? 2 : 1;
 
-    const s = (Math.random() < 0.15) ? 2 : 1;
-    const phase = Math.random() * Math.PI * 2;
-    const speed = 0.8 + Math.random() * 1.8;
-    const base  = 0.35 + Math.random() * 0.45;
-    const amp   = 0.15 + Math.random() * 0.4;
+      const phase = Math.random() * Math.PI * 2;
+      const speed = 0.8 + Math.random() * 1.8;
+      const base  = 0.35 + Math.random() * 0.45;
+      const amp   = 0.15 + Math.random() * 0.4;
 
-    stars.push({ x, y, s, phase, speed, base, amp });
+      stars.push({ x, y, s, phase, speed, base, amp });
+    }
   }
-}
 
-
-  // --------- SHOOTING STARS ----------
+  // --------- SHOOTING STARS (meteors) ----------
   const shooting = [];
   function spawnShootingStar(time) {
     const w = canvas.width, h = canvas.height;
@@ -212,7 +231,7 @@
       }
     }
 
-    // crater dots on visible crescent
+    // crater dots
     ctx.fillStyle = "rgba(175,175,175,0.85)";
     const craterCount = 7;
     for (let i = 0; i < craterCount; i++) {
@@ -287,25 +306,16 @@
     }
   }
 
-  // --------- CAMERA PAN (downwards = look up) ----------
-  let camStartY = 0;
-  let camNowY = 0;
-  let camTargetY = 0;
-  let camT0 = -999;
+  // --------- FALLING STAR SPRITES (separate file) ----------
+  const fallingStars = new FallingStarSystem({
+    src: "star.png",
+    spawnRate: 0.35,
+    maxStars: 22,
+    minScale: 0.06,   // super small start
+    maxScale: 0.55    // grows slower / not massive
+  });
 
-  const PAN_DURATION = 2.2; // <-- SLOWER SHIFT (was ~0.95)
-
-  function computePanDownPx(skyH, h) {
-    // hide ocean: need skyH + camY >= h
-    return (h - skyH) + 24;
-  }
-
-  function startPan(nowSeconds, skyH, h) {
-    camStartY = camNowY;
-    const down = computePanDownPx(skyH, h);
-    camTargetY = (Math.abs(camNowY) < 1) ? down : 0; // toggle
-    camT0 = nowSeconds;
-  }
+  let pendingEnableFallingStars = false;
 
   // --------- MAIN LOOP ----------
   let last = performance.now();
@@ -328,6 +338,12 @@
       camNowY = camTargetY;
     }
 
+    // Enable falling stars only AFTER pan finishes into look-up mode
+    if (pendingEnableFallingStars && Math.abs(camNowY - camTargetY) < 0.5) {
+      pendingEnableFallingStars = false;
+      fallingStars.enable();
+    }
+
     // Move whole scene DOWN (look up)
     ctx.setTransform(1, 0, 0, 1, 0, camNowY);
 
@@ -335,7 +351,7 @@
     ctx.fillStyle = "#000";
     ctx.fillRect(0, -camNowY - 2, w, h + Math.abs(camNowY) + 4);
 
-    // Stars (now cover full height so "rest of sky" is filled)
+    // Twinkle stars
     for (const s of stars) {
       const tw = s.base + s.amp * (0.5 + 0.5 * Math.sin(t * s.speed + s.phase));
       const b = Math.floor(255 * clamp(tw, 0, 1));
@@ -343,10 +359,14 @@
       ctx.fillRect(s.x * PX, s.y * PX, s.s * PX, s.s * PX);
     }
 
+    // Falling sprite stars (only active in look-up mode after pan completes)
+    fallingStars.update(dt, w, h, camNowY);
+    fallingStars.draw(ctx);
+
     // Moon
     drawCrescentMoon(skyH);
 
-    // Random meteors keep happening
+    // Meteors keep appearing randomly
     if (Math.random() < SHOOTING_CHANCE * dt * 1.2) {
       spawnShootingStar(t);
     }
@@ -399,10 +419,21 @@
     initStars();
   });
 
+  // Button click = toggle look up; falling stars ONLY after shift completes into look-up
   catchBtn.addEventListener("click", () => {
     const h = canvas.height;
     const skyH = Math.floor(h * SKY_RATIO);
+
+    const goingToLookUp = (Math.abs(camNowY) < 1);
+
     startPan(performance.now() * 0.001, skyH, h);
+
+    if (goingToLookUp) {
+      pendingEnableFallingStars = true;   // enable after pan completes
+    } else {
+      pendingEnableFallingStars = false;  // turning back to ocean view
+      fallingStars.disable();
+    }
   });
 </script>
 </body>
