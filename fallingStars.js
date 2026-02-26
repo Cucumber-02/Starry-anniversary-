@@ -1,11 +1,11 @@
 // fallingStars.js
-// One-by-one "catchable" falling star sequence with:
-// - Spawn away from edges + not near bottom
-// - Special star every N spawns (default 10)
-// - Special star uses a different image
-// - Special star has "glowing pixels" around it (NOT a halo)
-// - Each star picks a message from lists (regular vs special)
+// One-by-one "catchable" falling star sequence (SCREEN SPACE) with:
+// - Spawn away from left/right edges
+// - Special star every N spawns (default 10) using different image
+// - Special stars have glowing PIXELS cloud (not a ring/halo)
+// - Each star picks a message from external messages.js (window.STAR_MESSAGES)
 // - Regular stars slower, special stars faster
+// - On catch: star flies into the jar (does NOT disappear); jar stores it
 //
 // Exposes: window.FallingStarSystem
 
@@ -35,25 +35,27 @@
 
   class FallingStarSystem {
     constructor(opts = {}) {
-      // --- system state ---
       this.enabled = false;
       this.star = null;
       this._spawnCooldown = 0;
-      this._spawnCount = 0; // counts total spawns (regular + special)
+      this._spawnCount = 0;
 
-      // --- cadence ---
-      this.rareEvery = opts.rareEvery ?? 10; // special every 10 stars
+      // Rare star cadence: 6, then 7, then 8 normal spawns, repeating.
+      // Start at a random point in the cycle so it feels less predictable.
+      this.rareIntervals = opts.rareIntervals ?? [6, 7, 8];
+      this._rareIndex = Math.floor(Math.random() * this.rareIntervals.length);
+      this._sinceLastRare = 0;
 
-      // --- spawning geometry ---
-      this.spawnMargin = opts.spawnMargin ?? 24;         // world px above view
-      this.edgeMargin  = opts.edgeMargin ?? 48;          // keep away from left/right edges (screen px)
-      this.bottomPad   = opts.bottomPad ?? 120;          // keep float point above bottom edge (screen px)
+      // SCREEN-space spawning
+      this.spawnMargin = opts.spawnMargin ?? 24;   // spawns above top (-spawnMargin)
+      this.edgeMargin  = opts.edgeMargin ?? 48;    // keep away from left/right
+      this.bottomPad   = opts.bottomPad ?? 120;    // land/float above bottom
 
-      // --- timing ---
+      // timing
       this.spawnDelayMin = opts.spawnDelayMin ?? 0.9;
       this.spawnDelayMax = opts.spawnDelayMax ?? 2.2;
 
-      // speeds: regular slower, special faster
+      // speed
       this.baseSpeedNormal   = opts.baseSpeedNormal ?? 110;
       this.speedJitterNormal = opts.speedJitterNormal ?? 70;
 
@@ -64,7 +66,7 @@
       this.minScale = opts.minScale ?? 0.06;
       this.maxScale = opts.maxScale ?? 0.55;
 
-      // float (click window)
+      // float
       this.floatDurationMin = opts.floatDurationMin ?? 1.2;
       this.floatDurationMax = opts.floatDurationMax ?? 2.2;
       this.floatAmpMin = opts.floatAmpMin ?? 6;
@@ -72,16 +74,17 @@
       this.floatHzMin  = opts.floatHzMin ?? 1.0;
       this.floatHzMax  = opts.floatHzMax ?? 1.8;
 
-      // capture + message
-      this.captureDuration = opts.captureDuration ?? 0.45;
-      this.messageHold     = opts.messageHold ?? 1.1;
+      // capture phases
+      this.captureDuration = opts.captureDuration ?? 0.35; // to center
+      this.messageHold     = opts.messageHold ?? 1.0;      // show message
+      this.toJarDuration   = opts.toJarDuration ?? 0.55;   // fly to jar
 
-      // message pools (prefer external messages.js, then opts, then fallback)
+      // message pools
       const external = window.STAR_MESSAGES || {};
-      this.messages = external.normal ?? ["✨"];
-      this.rareMessages = external.rare ?? ["✨ Rare ✨"];
-      
-      // sprite images
+      this.messages = external.normal ?? (opts.messages ?? ["✨"]);
+      this.rareMessages = external.rare ?? (opts.rareMessages ?? ["✨ Rare ✨"]);
+
+      // images
       this.imgNormal = new Image();
       this.imgNormal.src = opts.src ?? "star.png";
       this.normalLoaded = false;
@@ -92,12 +95,14 @@
       this.rareLoaded = false;
       this.imgRare.onload = () => { this.rareLoaded = true; };
 
-      // glow pixels
+      // glow pixels for rare
       this.glowRGB = opts.glowRGB ?? "255, 230, 120";
-      this.glowCount = opts.glowCount ?? 28; // number of glowing pixels around special star
+      this.glowCount = opts.glowCount ?? 28;
+
+      // jar
+      this.jar = opts.jar ?? null;
     }
 
-    // Back-compat with your index.html
     enable() { this.startSequence(); }
     disable() { this.stop(); }
 
@@ -106,6 +111,9 @@
       this.star = null;
       this._spawnCooldown = 0;
       this._spawnCount = 0;
+
+      this._rareIndex = Math.floor(Math.random() * this.rareIntervals.length);
+      this._sinceLastRare = 0;
     }
 
     stop() {
@@ -113,45 +121,45 @@
       this.star = null;
       this._spawnCooldown = 0;
       this._spawnCount = 0;
+
+      this._rareIndex = Math.floor(Math.random() * this.rareIntervals.length);
+      this._sinceLastRare = 0;
     }
 
     _assetsReadyFor(isRare) {
       return isRare ? this.rareLoaded : this.normalLoaded;
     }
 
-    // screenY = worldY + camNowY
-    _worldToScreenY(worldY, camNowY) {
-      return worldY + camNowY;
-    }
-
-    _spawnOne(w, h, camNowY) {
-      // Decide if this spawn is special
+    _spawnOne(w, h) {
       this._spawnCount += 1;
-      const isRare = (this._spawnCount % this.rareEvery === 0);
 
-      // If the chosen asset isn't loaded yet, don't spawn now.
+      // Rare star pattern: 6, 7, 8 (repeat)
+      this._sinceLastRare += 1;
+      const interval = this.rareIntervals[this._rareIndex];
+      const isRare = (this._sinceLastRare >= interval);
+
+      if (isRare) {
+        this._sinceLastRare = 0;
+        this._rareIndex = (this._rareIndex + 1) % this.rareIntervals.length;
+      }
+
       if (!this._assetsReadyFor(isRare)) {
-        this._spawnCount -= 1; // don't count a failed spawn
+        this._spawnCount -= 1;
         return;
       }
       if (this.star) return;
 
-      const topWorldY = -camNowY;
-      const bottomWorldY = -camNowY + h;
-
-      // Keep away from edges
       const m = this.edgeMargin ?? 0;
       const x = clamp(Math.random() * w, m, w - m);
 
-      // Spawn above view so it falls in
-      const y = topWorldY - this.spawnMargin - rand(0, 24);
+      // spawn above the TOP edge
+      const y = -this.spawnMargin - rand(0, 24);
 
-      // Land well above bottom (avoid "end of screen")
-      // bottomWorldY - bottomPad ensures the float area isn't at the bottom edge.
-      const landYMax = bottomWorldY - this.bottomPad;
-      const landYMin = topWorldY + h * 0.45; // ensure it gets down into view a bit
-      const landY = bottomWorldY * 0.55 + (Math.random() * h * 0.12);
-      // speed
+      // land visible but above bottomPad
+      const landTop = h * 0.35;
+      const landBottom = Math.max(landTop + 10, h - this.bottomPad);
+      const landY = rand(landTop, landBottom);
+
       const speed = isRare
         ? (this.baseSpeedRare + rand(0, this.speedJitterRare))
         : (this.baseSpeedNormal + rand(0, this.speedJitterNormal));
@@ -160,7 +168,6 @@
       const floatAmp = rand(this.floatAmpMin, this.floatAmpMax);
       const floatHz  = rand(this.floatHzMin,  this.floatHzMax);
 
-      // Pick message now (unique per star)
       const msg = isRare ? choice(this.rareMessages, "✨ Lucky ✨") : choice(this.messages, "✨");
 
       this.star = {
@@ -170,7 +177,6 @@
 
         x, y,
         vy: speed,
-
         t: 0,
 
         landY,
@@ -185,48 +191,71 @@
         fromX: 0, fromY: 0,
         toX: 0,   toY: 0,
 
+        jarT: 0,
+        jarFromX: 0, jarFromY: 0,
+        jarToX: 0,   jarToY: 0,
+
         msgT: 0,
 
         hitX: 0,
         hitY: 0,
         hitR: 0,
 
-        ph: Math.random() * Math.PI * 2
+        ph: Math.random() * Math.PI * 2,
+
+        dismiss: false
       };
     }
 
-    onPointerDown(px, py, w, h, camNowY) {
+    onPointerDown(px, py, w, h) {
       if (!this.enabled) return false;
       const s = this.star;
       if (!s) return false;
-      if (s.phase !== "float") return false;
 
-      const dx = px - s.hitX;
-      const dy = py - s.hitY;
-      if (dx*dx + dy*dy <= s.hitR * s.hitR) {
-        s.phase = "capture";
-        s.capT = 0;
-
-        s.fromX = s.hitX;
-        s.fromY = s.hitY;
-
-        s.toX = w * 0.5;
-        s.toY = h * 0.5;
-
-        return true;
+      // 1st click: catch the star while it's floating
+      if (s.phase === "float") {
+        const dx = px - s.hitX;
+        const dy = py - s.hitY;
+        if (dx*dx + dy*dy <= s.hitR * s.hitR) {
+          s.phase = "capture";
+          s.capT = 0;
+          s.fromX = s.hitX;
+          s.fromY = s.hitY;
+          s.toX = w * 0.5;
+          s.toY = h * 0.5;
+          return true;
+        }
+        return false;
       }
+
+      // 2nd click: while the message is showing, click the star again to dismiss.
+      if (s.phase === "message") {
+        // During message phase the star is centered on screen.
+        const cx = w * 0.5;
+        const cy = h * 0.5;
+        const dx = px - cx;
+        const dy = py - cy;
+        const r = s.hitR > 0 ? s.hitR : 48;
+        if (dx*dx + dy*dy <= r * r) {
+          s.dismiss = true;
+          return true;
+        }
+        return false;
+      }
+
       return false;
     }
 
-    update(dt, w, h, camNowY) {
+    update(dt, w, h) {
       if (!this.enabled) return;
 
-      // Spawn when none exists
+      // pause if overlay open (prevents weird stuff)
+      if (this.jar && this.jar.overlayOpen) return;
+
       if (!this.star) {
         this._spawnCooldown -= dt;
         if (this._spawnCooldown <= 0) {
-          this._spawnOne(w, h, camNowY);
-          // if spawn didn't happen (assets not loaded), try again soon
+          this._spawnOne(w, h);
           if (!this.star) this._spawnCooldown = 0.15;
         }
         return;
@@ -235,11 +264,8 @@
       const s = this.star;
       s.t += dt;
 
-      const bottomWorldY = -camNowY + h;
-
       if (s.phase === "fall") {
         s.y += s.vy * dt;
-
         if (s.y >= s.landY) {
           s.phase = "float";
           s.floatT = 0;
@@ -248,8 +274,6 @@
 
       } else if (s.phase === "float") {
         s.floatT += dt;
-
-        // time out
         if (s.floatT >= s.floatDur) {
           s.phase = "fadeout";
           s.msgT = 0;
@@ -263,8 +287,30 @@
         }
 
       } else if (s.phase === "message") {
+        // Show the message until the user clicks the star again.
         s.msgT += dt;
-        if (s.msgT >= this.messageHold) {
+
+        if (s.dismiss) {
+          if (this.jar && s.rare) {
+            const drop = this.jar.getDropPoint(w, h);
+            s.phase = "toJar";
+            s.jarT = 0;
+            s.jarFromX = w * 0.5;
+            s.jarFromY = h * 0.5;
+            s.jarToX = drop.x;
+            s.jarToY = drop.y;
+          } else {
+            // Normal stars (or no jar) simply disappear on the 2nd click.
+            this.star = null;
+            this._spawnCooldown = rand(this.spawnDelayMin, this.spawnDelayMax);
+          }
+        }
+
+      } else if (s.phase === "toJar") {
+        s.jarT += dt;
+        if (s.jarT >= this.toJarDuration) {
+          // Only store *special/rare* stars in the jar.
+          if (this.jar && s.rare) this.jar.addStar({ rare: true, msg: s.msg });
           this.star = null;
           this._spawnCooldown = rand(this.spawnDelayMin, this.spawnDelayMax);
         }
@@ -278,8 +324,7 @@
       }
     }
 
-    // Draw in SCREEN coords (identity transform)
-    draw(ctx, w, h, camNowY) {
+    draw(ctx, w, h) {
       if (!this.enabled) return;
       const s = this.star;
       if (!s) return;
@@ -299,12 +344,12 @@
 
       if (s.phase === "fall") {
         cx = s.x;
-        cy = this._worldToScreenY(s.y, camNowY);
+        cy = s.y;
 
       } else if (s.phase === "float") {
         const bob = Math.sin(s.floatT * Math.PI * 2 * s.floatHz) * s.floatAmp;
         cx = s.x;
-        cy = this._worldToScreenY(s.anchorY + bob, camNowY);
+        cy = s.anchorY + bob;
 
       } else if (s.phase === "capture") {
         const u = clamp(s.capT / this.captureDuration, 0, 1);
@@ -316,23 +361,28 @@
         cx = w * 0.5;
         cy = h * 0.5;
 
+      } else if (s.phase === "toJar") {
+        const u = clamp(s.jarT / this.toJarDuration, 0, 1);
+        const e = easeInOut(u);
+        cx = lerp(s.jarFromX, s.jarToX, e);
+        cy = lerp(s.jarFromY, s.jarToY, e);
+
       } else if (s.phase === "fadeout") {
         const bob = Math.sin(s.floatT * Math.PI * 2 * s.floatHz) * s.floatAmp;
         cx = s.x;
-        cy = this._worldToScreenY(s.anchorY + bob, camNowY);
+        cy = s.anchorY + bob;
       }
 
-      // clickable hit circle (only used in float)
+      // hit circle
       s.hitX = cx;
       s.hitY = cy;
       s.hitR = Math.max(dw, dh) * 0.62;
 
-      // fadeout alpha
+      // fade alpha
       let alpha = 1;
       if (s.phase === "fadeout") alpha = clamp(1 - (s.msgT / 0.35), 0, 1);
 
-      // --- SPECIAL: glowing pixels cloud (NOT a halo) ---
-      // Only during visible phases (fall/float/capture/message) but strongest in float
+      // Rare glow pixels cloud
       if (s.rare && s.phase !== "fadeout") {
         const strength =
           (s.phase === "float") ? 1.0 :
@@ -341,31 +391,24 @@
 
         const pulse = 0.75 + 0.25 * Math.sin(performance.now() * 0.004 + s.ph);
         const glowA = alpha * strength * (0.22 + 0.12 * pulse);
-
-        // scatter radius around sprite (tight cluster)
         const rBase = Math.max(dw, dh) * 0.55;
 
         ctx.save();
         ctx.globalAlpha = glowA;
 
-        // draw many tiny pixels around the star
-        // (pixelated feel: snap to integer px)
         for (let i = 0; i < this.glowCount; i++) {
           const a = Math.random() * Math.PI * 2;
           const rr = rBase * (0.35 + Math.random() * 0.75);
           const gx = Math.floor(cx + Math.cos(a) * rr);
           const gy = Math.floor(cy + Math.sin(a) * rr);
 
-          // vary brightness
           const local = 0.55 + 0.45 * Math.random();
           ctx.fillStyle = `rgba(${this.glowRGB}, ${local})`;
 
-          // use 1–2 px squares (chunky)
           const sz = (Math.random() < 0.22) ? 2 : 1;
           ctx.fillRect(gx, gy, sz, sz);
         }
 
-        // a few steady pixels closer-in (more "glow" consistency)
         ctx.globalAlpha = alpha * strength * 0.25;
         ctx.fillStyle = `rgba(${this.glowRGB}, 1)`;
         for (let i = 0; i < 10; i++) {
@@ -388,12 +431,10 @@
       ctx.drawImage(img, dx, dy, dw, dh);
       ctx.restore();
 
-      // message
+      // message box
       if (s.phase === "message") {
-        const u = clamp(s.msgT / this.messageHold, 0, 1);
-        const msgAlpha =
-          (u < 0.15) ? easeInOut(u / 0.15)
-          : (u > 0.85 ? 1 - easeInOut((u - 0.85) / 0.15) : 1);
+        // Quick fade-in, then stay until the user dismisses it.
+        const msgAlpha = clamp(s.msgT / 0.18, 0, 1);
 
         ctx.save();
         ctx.globalAlpha = msgAlpha;
