@@ -3,7 +3,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
   <title>Pixel Night Ocean</title>
   <style>
     html, body { height: 100%; margin: 0; background: #000; overflow: hidden; }
@@ -14,6 +14,11 @@
       image-rendering: pixelated;
       image-rendering: crisp-edges;
     }
+
+    /* Mobile-friendly: prevent scrolling/zoom gestures while playing */
+    html, body { touch-action: none; overscroll-behavior: none; -webkit-text-size-adjust: 100%; }
+    canvas { touch-action: none; -webkit-user-select: none; user-select: none; }
+    #catchBtn { touch-action: manipulation; }
 
     #catchBtn {
       position: fixed;
@@ -444,15 +449,42 @@
     }
   });
 
-  // Click handling: jar overlay first, then star catching
-  canvas.addEventListener("pointerdown", (e) => {
+  // Input handling (mobile + desktop): jar overlay first, then star catching
+  function handleTap(clientX, clientY) {
     const rect = canvas.getBoundingClientRect();
     const dpr = window.devicePixelRatio || 1;
-    const px = (e.clientX - rect.left) * dpr;
-    const py = (e.clientY - rect.top) * dpr;
+    const px = (clientX - rect.left) * dpr;
+    const py = (clientY - rect.top) * dpr;
 
     if (jarUI.onPointerDown(px, py, canvas.width, canvas.height)) return;
     fallingStars.onPointerDown(px, py, canvas.width, canvas.height);
+  }
+
+  // Pointer Events (best path; works for mouse + touch on modern browsers)
+  canvas.addEventListener("pointerdown", (e) => {
+    // Prevent page gestures (important on mobile Safari)
+    e.preventDefault();
+    handleTap(e.clientX, e.clientY);
+  }, { passive: false });
+
+  // Fallback for older iOS / browsers without Pointer Events
+  canvas.addEventListener("touchstart", (e) => {
+    e.preventDefault();
+    const t = e.changedTouches && e.changedTouches[0];
+    if (!t) return;
+    handleTap(t.clientX, t.clientY);
+  }, { passive: false });
+
+  canvas.addEventListener("mousedown", (e) => {
+    handleTap(e.clientX, e.clientY);
+  });
+
+  // Extra: stop iOS rubber-band while touching the canvas
+  canvas.addEventListener("touchmove", (e) => e.preventDefault(), { passive: false });
+
+  window.addEventListener("orientationchange", () => {
+    // iOS sometimes reports stale innerWidth/innerHeight immediately; a micro-delay helps.
+    setTimeout(() => { resize(); initStars(); }, 50);
   });
 </script>
 </body>
