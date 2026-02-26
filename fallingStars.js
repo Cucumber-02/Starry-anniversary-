@@ -65,6 +65,7 @@
       // growth
       this.minScale = opts.minScale ?? 0.06;
       this.maxScale = opts.maxScale ?? 0.55;
+      this.uiScale = opts.uiScale ?? 1;
 
       // float
       this.floatDurationMin = opts.floatDurationMin ?? 1.2;
@@ -165,7 +166,7 @@
         : (this.baseSpeedNormal + rand(0, this.speedJitterNormal));
 
       const floatDur = rand(this.floatDurationMin, this.floatDurationMax);
-      const floatAmp = rand(this.floatAmpMin, this.floatAmpMax);
+      const floatAmp = rand(this.floatAmpMin, this.floatAmpMax) * this.uiScale;
       const floatHz  = rand(this.floatHzMin,  this.floatHzMax);
 
       const msg = isRare ? choice(this.rareMessages, "✨ Lucky ✨") : choice(this.messages, "✨");
@@ -212,8 +213,8 @@
       const s = this.star;
       if (!s) return false;
 
-      // 1st click: catch the star while it's floating
-      if (s.phase === "float") {
+      // 1st click: catch the star while it's falling or floating
+      if (s.phase === "fall" || s.phase === "float") {
         const dx = px - s.hitX;
         const dy = py - s.hitY;
         if (dx*dx + dy*dy <= s.hitR * s.hitR) {
@@ -337,8 +338,8 @@
       const g = Math.pow(growth, 2.0);
       const scale = lerp(this.minScale, this.maxScale, g);
 
-      const dw = img.width * scale;
-      const dh = img.height * scale;
+      const dw = img.width * scale * this.uiScale;
+      const dh = img.height * scale * this.uiScale;
 
       let cx, cy;
 
@@ -376,7 +377,8 @@
       // hit circle
       s.hitX = cx;
       s.hitY = cy;
-      s.hitR = Math.max(dw, dh) * 0.62;
+      // a little extra forgiveness for touch
+      s.hitR = Math.max(dw, dh) * 0.72;
 
       // fade alpha
       let alpha = 1;

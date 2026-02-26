@@ -1,5 +1,5 @@
 // jar.js
-// Star Jar UI (bottom-right) + expandable overlay gallery.
+// Star Jar UI (top-right) + expandable overlay gallery.
 // - Draws a transparent jar rectangle with white border
 // - Stores caught stars (normal/rare) with their messages
 // - Clicking the jar toggles an overlay that shows all caught stars + messages
@@ -35,7 +35,7 @@
 
     getRect(w, h) {
       const x = Math.floor(w - this.w - this.pad);
-      const y = Math.floor(h - this.h - this.pad);
+      const y = Math.floor(this.pad);
       return { x, y, w: this.w, h: this.h };
     }
 
