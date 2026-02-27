@@ -441,7 +441,10 @@
         ctx.save();
         ctx.globalAlpha = msgAlpha;
 
-        ctx.font = "700 18px system-ui, -apple-system, Segoe UI, Roboto, Arial";
+        const isMobile = Math.min(window.innerWidth, window.innerHeight) < 520;
+        ctx.font = isMobile
+          ? "700 32px system-ui, -apple-system, Segoe UI, Roboto, Arial"
+          : "700 18px system-ui, -apple-system, Segoe UI, Roboto, Arial";
         const padX = 18;
         const metrics = ctx.measureText(s.msg);
         const boxW = Math.ceil(metrics.width) + padX * 2;

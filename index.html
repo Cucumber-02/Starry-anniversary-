@@ -488,16 +488,18 @@ updateUISizes();
 
   // Input handling (mobile + desktop): jar overlay first, then star catching
   function handleTap(clientX, clientY) {
-    const rect = canvas.getBoundingClientRect();
-    const dpr = window.devicePixelRatio || 1;
-    DPR = dpr;
-    const px = (clientX - rect.left) * dpr;
-    const py = (clientY - rect.top) * dpr;
+  const rect = canvas.getBoundingClientRect();
+  const dpr = window.devicePixelRatio || 1;
 
-    if (jarUI.onPointerDown(px, py, canvas.width, canvas.height)) return;
-    fallingStars.onPointerDown(px, py, canvas.width, canvas.height);
-  }
+  const px = (clientX - rect.left) * dpr;
+  const py = (clientY - rect.top) * dpr;
 
+  // 1️⃣ Always let jar handle input first
+  if (jarUI.onPointerDown(px, py, canvas.width, canvas.height)) return;
+
+  // 2️⃣ Then let stars handle it
+  fallingStars.onPointerDown(px, py, canvas.width, canvas.height);
+}
   // Pointer Events (best path; works for mouse + touch on modern browsers)
   canvas.addEventListener("pointerdown", (e) => {
     // Prevent page gestures (important on mobile Safari)

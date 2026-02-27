@@ -1,12 +1,13 @@
 // jar.js
 // Star Jar UI (top-right) + expandable overlay gallery.
-// - Draws a transparent jar rectangle with white border
-// - Stores caught stars (normal/rare) with their messages
-// - Clicking the jar toggles an overlay that shows all caught stars + messages
+// FIX: Jar was hard to click on mobile -> add generous hitSlop (tap margin)
+// and ensure hit-testing always uses the same rect as drawing.
 //
 // Exposes: window.StarJarUI
 
 (function () {
+  function clamp(v, lo, hi) { return Math.max(lo, Math.min(hi, v)); }
+
   function roundRect(ctx, x, y, w, h, r) {
     const rr = Math.min(r, w / 2, h / 2);
     ctx.beginPath();
@@ -28,11 +29,15 @@
       this.stroke = opts.stroke ?? "rgba(255,255,255,0.85)";
       this.bgOverlay = opts.bgOverlay ?? "rgba(0,0,0,0.72)";
 
+      // NEW: extra padding around jar for easier tapping on mobile
+      this.hitSlop = opts.hitSlop ?? 18; // in *device pixels* (your canvas is device-px sized)
+
       this.stars = []; // { rare, msg, t }
       this.overlayOpen = false;
       this.selectedIndex = -1;
     }
 
+    // Always top-right
     getRect(w, h) {
       const x = Math.floor(w - this.w - this.pad);
       const y = Math.floor(this.pad);
@@ -53,12 +58,24 @@
       this.selectedIndex = -1;
     }
 
+    // FIX: generous hit area (hitSlop) to make jar reliably clickable on phones
     isPointInJar(px, py, w, h) {
       const r = this.getRect(w, h);
-      return (px >= r.x && px <= r.x + r.w && py >= r.y && py <= r.y + r.h);
+
+      // Auto-scale hit slop a bit based on canvas size (still in device px)
+      const auto = Math.floor(Math.min(w, h) * 0.015); // ~1.5% of screen
+      const slop = clamp(Math.max(this.hitSlop, auto), 12, 42);
+
+      const x0 = r.x - slop;
+      const y0 = r.y - slop;
+      const x1 = r.x + r.w + slop;
+      const y1 = r.y + r.h + slop;
+
+      return (px >= x0 && px <= x1 && py >= y0 && py <= y1);
     }
 
     onPointerDown(px, py, w, h) {
+      // If overlay open: allow interactions inside overlay, close on outside click
       if (this.overlayOpen) {
         const panel = this._overlayPanelRect(w, h);
 
@@ -76,6 +93,7 @@
         return true;
       }
 
+      // Jar click when overlay closed
       if (this.isPointInJar(px, py, w, h)) {
         this.toggleOverlay();
         return true;
@@ -166,7 +184,7 @@
 
       ctx.fillStyle = "rgba(255,255,255,0.55)";
       ctx.font = "500 12px system-ui, -apple-system, Segoe UI, Roboto, Arial";
-      ctx.fillText("Click a star to read its message. Click outside to close.", panel.x + 18, panel.y + 42);
+      ctx.fillText("Tap a star to read its message. Tap outside to close.", panel.x + 18, panel.y + 42);
 
       const gridX = panel.x + 18;
       const gridY = panel.y + 70;
