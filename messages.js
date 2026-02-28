@@ -67,7 +67,7 @@ window.STAR_MESSAGES = {
     "Ill love you forever and ever", 
     "did you check in with in me todayyy",
     "best boyfriend award goes to YOU my bby",
-    "if you been waiting for fallin in love baby you dont have to wait on meee" 
+    "if you been waiting for fallin in love baby you dont have to wait on meee", 
     "you wannaaa make outtt", 
   "can I be your little house wife plzz", 
   "lemme take a bite out of you :3", 
@@ -81,8 +81,8 @@ window.STAR_MESSAGES = {
 "take a nap if you feel tired bby get some rest",
   "I feel like a little hacker putting in these messages in the code teehee", 
   "can't wait to see what the future has in store for us bby", 
-  "I wish you were here with me" 
-"I wish I could be there with you bby" 
+  "I wish you were here with me" ,
+"I wish I could be there with you bby",
 "I hope you had an amazing day so far bby",
   "how was your day today my love", 
   "I'm so happy that YOU are MY bf I dont want anyone else",
@@ -97,7 +97,8 @@ window.STAR_MESSAGES = {
   "Em thật sự rất biết ơn vì có anh trong cuộc đời này", 
   "Em rất tự hào về anh",
 "Anh là người đàn ông tuyệt vời nhất với em",
-  "Dù thế nào đi nữa, em vẫn chọn anh", 
+  "Dù thế nào đi nữa, em vẫn chọn anh"
+  ],
   
   rare: [
     "Free dinner on me!",
